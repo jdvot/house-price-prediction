@@ -1,6 +1,7 @@
 __pycache__/
 .ipynb_checkpoints/
 models/
-data/
+/data/
 *.pyc
 .DS_Store
+data/
