@@ -1,9 +1,13 @@
 import pandas as pd
 import joblib
 import streamlit as st
+import os
+# Get absolute path
+current_dir = os.path.dirname(__file__)
+model_path = os.path.join(current_dir, '..', 'models', 'house_price_model.pkl')
 
-# Load model and features
-model_data = joblib.load('../models/house_price_model.pkl')
+model_data = joblib.load(model_path)
+
 model = model_data['model']
 expected_features = model_data['features']
 
