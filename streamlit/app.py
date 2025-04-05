@@ -8,7 +8,7 @@ def prepare_input(user_input: dict, expected_features: list) -> pd.DataFrame:
     df = pd.DataFrame([user_input])
 
     if 'Neighborhood' in df.columns:
-        neighborhood_encoded = pd.get_dummies(df['Neighborhood'], prefix='Neighborhood')
+        neighborhood_encoded = pd.get_dummies(df['Neighborhood'], prefix="Neighborhood")
         df = pd.concat([df.drop('Neighborhood', axis=1), neighborhood_encoded], axis=1)
 
     for feature in expected_features:
@@ -16,7 +16,6 @@ def prepare_input(user_input: dict, expected_features: list) -> pd.DataFrame:
             df[feature] = 0
 
     df = df[expected_features]
-
     return df
 
 # -- Load model
