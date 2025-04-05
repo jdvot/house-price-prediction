@@ -1,86 +1,36 @@
-# app.py
-
-import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
-import os
+import streamlit as st
 
-# --------- Load model properly ---------
-@st.cache_resource
-def load_model():
-    try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_dir, 'models', 'house_price_model.pkl')
-        model = joblib.load(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Erreur lors du chargement du modèle : {e}")
-        st.stop()
+# Load model and features
+model_data = joblib.load('../models/house_price_model.pkl')
+model = model_data['model']
+expected_features = model_data['features']
 
-model = load_model()
+# User input
+user_input = {
+    'OverallQual': 7,
+    'GrLivArea': 1710,
+    'GarageCars': 2,
+    'TotalBsmtSF': 856,
+    'Neighborhood': 'CollgCr'
+}
 
-# List of neighborhoods (simplified version)
-neighborhoods = [
-    'CollgCr', 'Veenker', 'Crawfor', 'NoRidge', 'Mitchel',
-    'Somerst', 'NWAmes', 'OldTown', 'BrkSide', 'Sawyer'
-]
+# Transform input into DataFrame
+X_input = pd.DataFrame([user_input])
 
-# --------- Streamlit App Layout ---------
-st.set_page_config(page_title="🏡 House Price Prediction", page_icon="🏡", layout="centered")
+# One-Hot Encoding for Neighborhood
+X_input = pd.get_dummies(X_input)
 
-st.title("🏡 House Price Predictor")
-st.markdown("### Predict the sale price of a house based on key features.")
-st.write("---")
+# Add missing columns
+for col in expected_features:
+    if col not in X_input.columns:
+        X_input[col] = 0
 
-# --------- Input Features Section ---------
-st.header("🔢 Input House Features")
+# Ensure correct column order
+X_input = X_input[expected_features]
 
-col1, col2 = st.columns(2)
+# Predict
+prediction = model.predict(X_input)[0]
 
-with col1:
-    OverallQual = st.slider('Overall Quality (1 = Poor, 10 = Excellent)', 1, 10, 5)
-    GarageCars = st.slider('Garage Capacity (0-5 cars)', 0, 5, 2)
-    Neighborhood = st.selectbox('Neighborhood', neighborhoods)
-
-with col2:
-    GrLivArea = st.number_input('Ground Living Area (sq ft)', 500, 5000, 1500)
-    TotalBsmtSF = st.number_input('Total Basement Area (sq ft)', 0, 4000, 1000)
-
-# --------- Prediction Button ---------
-st.write("---")
-if st.button("📈 Predict Sale Price"):
-
-    # Prepare input
-    input_dict = {
-        'OverallQual': OverallQual,
-        'GrLivArea': GrLivArea,
-        'GarageCars': GarageCars,
-        'TotalBsmtSF': TotalBsmtSF
-    }
-    
-    # Add all neighborhoods as 0
-    for n in neighborhoods:
-        input_dict[f'Neighborhood_{n}'] = 0
-
-    # Set selected neighborhood to 1
-    if f'Neighborhood_{Neighborhood}' in input_dict:
-        input_dict[f'Neighborhood_{Neighborhood}'] = 1
-
-    input_data = pd.DataFrame([input_dict])
-
-    # Display summary before prediction
-    st.subheader("🔎 Your Inputs Recap:")
-    st.dataframe(input_data)
-
-    # Predict
-    prediction = model.predict(input_data)
-    predicted_price = int(prediction[0])
-
-    st.success(f"💵 Estimated Sale Price: **${predicted_price:,}**")
-    st.balloons()
-
-# --------- Footer ---------
-st.write("---")
-st.caption("Created with ❤️ by Julien Devot · Powered by Random Forest Regressor")
-st.caption("Baseline RMSE ≈ 29,000 $ · R² ≈ 0.89 🚀")
+st.success(f"🏡 Estimated House Price: ${prediction:,.2f}")
